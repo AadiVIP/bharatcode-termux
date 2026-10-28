@@ -1,0 +1,16 @@
+# Local inspection and test artifacts; never commit vendor binaries
+work/
+package/
+bharatcode.tgz
+*.tgz
+*.tar.gz
+
+# Test and tooling artifacts
+tests/artifacts/
+__pycache__/
+*.pyc
+*.log
+
+# Editor / agent state
+.qoder/
+.DS_Store

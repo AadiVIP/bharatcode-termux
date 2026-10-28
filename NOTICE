@@ -1,0 +1,11 @@
+This repository is an independent compatibility project. It is not affiliated
+with, endorsed by, or supported by BharatCode.
+
+It does not contain or redistribute BharatCode source code, binaries, or other
+vendor artifacts. At runtime, install.sh downloads official packages from the
+public npm registry and verifies their integrity. The official package declares
+the MIT license (Copyright (c) 2025 opencode); its LICENSE file is retained in
+the local installation directory.
+
+The MIT license in this repository applies only to the original installer,
+wrapper, diagnostics, tests, and documentation in this repository.

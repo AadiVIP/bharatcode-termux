@@ -1,0 +1,54 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Mocked unit tests (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends shellcheck
+
+      - name: Bash syntax checks
+        run: |
+          for f in install.sh uninstall.sh update.sh diagnose.sh lib/common.sh tests/*.sh; do
+            echo "bash -n $f"
+            bash -n "$f"
+          done
+
+      - name: ShellCheck (errors only)
+        run: |
+          shellcheck --severity=error --shell=bash \
+            install.sh uninstall.sh update.sh diagnose.sh \
+            lib/common.sh tests/*.sh
+
+      - name: Secret-pattern scan
+        run: bash tests/secret-scan.sh
+
+      - name: Mocked unit tests
+        run: bash tests/run-tests.sh
+
+  pins:
+    name: Registry pins and integrity (network)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify pinned tarballs against npm
+        run: bash tests/verify-pins.sh
