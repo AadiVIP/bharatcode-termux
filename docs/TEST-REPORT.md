@@ -14,6 +14,7 @@ tests from real-device tests, and user-assisted authentication from automated ch
 | glibc runtime | Termux `glibc` 2.44 (`ld.so ... 2.44-0`) |
 | BharatCode | `1.15.46` (`bharatcode` + `bharatcode-linux-arm64`) |
 | Installer state | `~/.local/share/bharatcode-termux`, launcher `$PREFIX/bin/bharatcode` |
+| Repository | `AadiVIP/bharatcode-termux` (public), initial commit `601cf46` |
 | Root / proot | None used |
 
 ## Result summary
@@ -22,12 +23,14 @@ tests from real-device tests, and user-assisted authentication from automated ch
 | --- | --- | --- | --- |
 | Mocked/unit | `bash tests/run-tests.sh` | **122 passed, 0 failed, 0 skipped**, exit 0 | Android/Termux (mocked; CI-safe) |
 | Real device E2E | `bash tests/device.sh --with-uninstall --with-network --with-auth` | **42 passed, 0 failed, 0 skipped**, exit 0 | Real Android/Termux/arm64 |
+| Post-live runtime | `bash tests/device.sh --with-network` | **32 passed, 0 failed, 2 skipped**, exit 0 | Real device, after public install |
 | Registry pins | `bash tests/verify-pins.sh` | **8/8 checks passed**, exit 0 | Network, npm registry |
 | Diagnostics | `bash diagnose.sh` | **All critical checks passed (0 warnings)**, exit 0 | Real device |
 | Secret scan | `bash tests/secret-scan.sh` | No credential/private-key patterns | Local tracked files |
 
 The device suite was re-run at 15:11 after the final test changes. The unit suite was
-re-run at 15:15. The pin check was last run at 14:48. The diagnostic transcript is from
+re-run at 15:15 and again at 15:59 with the same result. The pin check was last run at
+14:48. The diagnostic transcript is from
 14:53 (signed out at that time; see [Authentication](#authentication)).
 
 ## Real-device evidence
@@ -53,8 +56,38 @@ Rerunning the installer without changes produced the idempotent path (14:14):
 ==> BharatCode 1.15.46 is already installed and working
 ```
 
-`bash install.sh --force` and `bash update.sh` (14:14 and 14:32) both exited 0; the
-published-install verification is recorded in [FINAL-AUDIT.md](FINAL-AUDIT.md).
+`bash install.sh --force` and `bash update.sh` (14:14 and 14:32) both exited 0.
+
+### Published one-command install (live)
+
+After publication, the managed installation was uninstalled (vendor account/session data
+was preserved) and the exact README command was run from the public repository:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AadiVIP/bharatcode-termux/main/install.sh | bash
+```
+
+Result: exit 0. The live installer downloaded both official tarballs, verified the same
+pinned SHA-256 values shown above, installed 1.15.46, and passed the launcher smoke test.
+The same command was then run a second time; it exited 0 and reported
+`BharatCode 1.15.46 is already installed and working`.
+
+After the live installation:
+
+- `bharatcode --version` -> `1.15.46`, exit 0.
+- `bharatcode auth status` -> the official CLI reports `Signed in`, exit 0 (account
+  details omitted). The session survived the uninstall/reinstall because vendor data is
+  kept outside the managed install directory.
+- The published `diagnose.sh` (fetched over HTTPS and executed without saving) exited 0
+  with `All critical checks passed (0 warning(s))`.
+- `bash tests/device.sh --with-network` (after the live install) produced **32 passed,
+  0 failed, 2 skipped**, exit 0. The skips are the optional `--with-auth` and
+  `--with-uninstall` sections; the full 42/0/0 run is above.
+- The raw `README.md`, `install.sh`, `uninstall.sh`, `update.sh`, `diagnose.sh`, and
+  `docs/TEST-REPORT.md` served from `main` had SHA-256 hashes identical to the tested
+  local files before this report update.
+
+The complete publication audit is in [FINAL-AUDIT.md](FINAL-AUDIT.md).
 
 Note: this device already had the Termux glibc packages from compatibility research, so
 the installer's "install glibc from scratch" branch was not re-exercised on a bare
@@ -156,11 +189,12 @@ reinstalls. Vendor account/session data is not removed.
   It **never submits credentials and never completes sign-in**.
 - The read-only diagnostic at 14:53 reported `Signed out`.
 - A session appeared at 14:55 (BharatCode's `auth.json` mtime). This was completed
-  interactively by the account owner in a browser, not by the test suite and not by this
-  project.
+  interactively in a browser (user-assisted), not by the test suite; the project's
+  automation did not submit credentials.
 - At 15:11 the device suite saw `Signed in`; at 15:15 the official CLI still reported
-  `Signed in` (exit 0). This is the official CLI's own confirmation of an authenticated
-  session.
+  `Signed in` (exit 0). The live uninstall/reinstall at 15:26 preserved the session, and
+  `auth status` again reported `Signed in`. This is the official CLI's own confirmation
+  of an authenticated session.
 - Account identifiers, tokens, authorization URLs, and session contents are intentionally
   omitted from this report. No credential material was passed to any test.
 
@@ -203,6 +237,8 @@ tested or that every post-login feature was exercised.
   x86/x86_64, rooted devices, proot, or the Play Store Termux build.
 - Desktop-only BharatCode features that assume a desktop browser or desktop tooling.
 - Upstream BharatCode behavior, services, and security.
+- A GitHub-hosted CI run. The workflow is committed, but GitHub Actions is disabled at
+  the account level; see [CI](#ci).
 
 ## Reproducing
 
@@ -228,7 +264,27 @@ redacted. Raw test logs and vendor tarballs are kept in the git-ignored `work/` 
 
 ## CI
 
-The first GitHub Actions run on the published repository is recorded in
-[FINAL-AUDIT.md](FINAL-AUDIT.md) together with its URL and result. CI covers syntax,
-ShellCheck (errors), the secret scan, the 122 mocked checks, and the registry pin
-verification. It does not run the Android device suite.
+The repository includes `.github/workflows/tests.yml` (syntax checks, ShellCheck errors,
+secret scan, 122 mocked checks, and registry pin verification). GitHub Actions is
+currently disabled at the **account** level for `AadiVIP`. The workflow is registered and
+active, but the initial push produced zero runs, and a manual dispatch on 2026-10-28 at
+09:59 UTC failed with:
+
+```text
+HTTP 422: Actions has been disabled for this user.
+```
+
+No CI run URL or hosted result can be reported until the account owner enables Actions in
+the GitHub account settings. To avoid presenting an unexecuted workflow as evidence, the
+same steps were run locally on the device on 2026-10-28 with ShellCheck 0.11.0:
+
+| Step | Result |
+| --- | --- |
+| `bash -n` on all scripts | passed |
+| `shellcheck --severity=error --shell=bash ...` | exit 0 |
+| `tests/secret-scan.sh` | no patterns in 21 files |
+| `tests/run-tests.sh` | 122 passed, 0 failed |
+| `tests/verify-pins.sh` | 8/8 passed at 14:48 (constants unchanged); the live install re-verified both SHA-256 pins |
+
+CI is configured to run on Ubuntu, not Android, so it would only repeat the mocked and
+pin checks. The real-device evidence remains this report.

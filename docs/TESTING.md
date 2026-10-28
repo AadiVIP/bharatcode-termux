@@ -44,7 +44,7 @@ Termux/arm64 or without the glibc loader. It does not remove account/session dat
 
 | Requirement | Mocked/unit | Real device |
 | --- | --- | --- |
-| Fresh install | installer state transitions with synthetic tarballs (`install_version` test) | `tests/device.sh` installs if missing; manual fresh install transcript in TEST-REPORT |
+| Fresh install | installer state transitions with synthetic tarballs (`install_version` test) | `tests/device.sh` installs if missing; published one-command install transcript in TEST-REPORT |
 | Repeat install / idempotency | `--help`, argument tests; installer logic | `install.sh` rerun and `update.sh` report “already installed” |
 | Missing dependencies | fake `pkg` in a restricted PATH; clear failure | Real Termux `pkg` path exercised when glibc is absent (manual) |
 | Corrupt download | fake curl writes bytes; hash failure removes file/`.part` | Registry pin verification; real downloads hash-checked during install |
@@ -77,12 +77,18 @@ Termux/arm64 or without the glibc loader. It does not remove account/session dat
 
 ## CI
 
-`.github/workflows/tests.yml` runs on Ubuntu:
+`.github/workflows/tests.yml` is committed and active. It is configured to run on Ubuntu:
 
 - `bash -n` syntax checks and `shellcheck --severity=error` on the scripts;
 - the mocked/unit suite (`tests/run-tests.sh`);
 - the registry pin/integrity verification (`tests/verify-pins.sh`);
 - a secret-pattern scan of tracked files (`tests/secret-scan.sh`).
+
+**Current blocker (2026-10-28):** GitHub Actions is disabled at the account level for
+`AadiVIP`. The initial push produced zero runs, and a manual dispatch returned
+`HTTP 422: Actions has been disabled for this user.` The same steps were executed locally
+with ShellCheck 0.11.0 and all passed (see [TEST-REPORT.md](TEST-REPORT.md#ci)). Enabling
+Actions in the GitHub account settings is the remaining manual step.
 
 CI has no Android device, no Termux, and no Termux glibc runtime, so it cannot run
 `tests/device.sh`. Passing CI is necessary but not sufficient; the device results in

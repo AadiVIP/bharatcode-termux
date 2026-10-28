@@ -194,6 +194,13 @@ Real command transcripts, exit codes, sanitized logs, and explicitly labelled
 user-assisted/untested items are in [docs/TEST-REPORT.md](docs/TEST-REPORT.md). See
 [docs/TESTING.md](docs/TESTING.md) for the matrix and CI notes.
 
+The GitHub Actions workflow is committed, but GitHub Actions is currently disabled at the
+account level for this repository. The same CI steps (ShellCheck 0.11.0, syntax checks,
+secret scan, 122 mocked checks) were run locally and passed. The exact blocker and the
+live one-command install transcript are in
+[docs/TEST-REPORT.md](docs/TEST-REPORT.md) and
+[docs/FINAL-AUDIT.md](docs/FINAL-AUDIT.md).
+
 ## Project layout
 
 ```
