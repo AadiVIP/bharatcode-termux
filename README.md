@@ -69,9 +69,10 @@ alternatives.
   `glibc-repo`, `glibc`, and `termux-exec-glibc` from Termux's package repositories when
   the glibc runtime is absent.
 - Installs the **pinned, tested** BharatCode version. Tarballs come from
-  `https://registry.npmjs.org`; the pinned SHA-256 and the registry's sha512 integrity
-  are checked. Archives are validated (no absolute paths, `..` traversal, or symlinks)
-  before extraction.
+  `https://registry.npmjs.org`; each tarball's pinned SHA-256 is checked at install time.
+  `tests/verify-pins.sh` independently cross-checks those pins against npm's `sha512`
+  integrity and `sha1` shasum metadata. Archives are validated (no absolute paths, `..`
+  traversal, or symlinks) before extraction.
 - Installs into `~/.local/share/bharatcode-termux` (override with
   `BHARATCODE_TERMUX_DATA`), keeps versions side by side, and switches the `current`
   symlink atomically.
@@ -173,9 +174,11 @@ Known limitations:
 
 ## Security
 
-The installer pins the tested version and verifies both the SHA-256 of each official
-tarball and the npm registry's `sha512` integrity metadata. The glibc runtime comes from
-Termux's signed package repository. No credentials are read, logged, or proxied; auth is
+The installer pins the tested version and verifies the SHA-256 of each official tarball
+at install time. `tests/verify-pins.sh` cross-checks those pins against the npm registry's
+`sha512` integrity and `sha1` shasum metadata; untested versions are checked against the
+registry's `sha512` integrity at install time. The glibc runtime comes from Termux's
+signed package repository. No credentials are read, logged, or proxied; auth is
 handled entirely by the official CLI. `update.sh` downloads the current installer from
 this repository over HTTPS. See [docs/SECURITY.md](docs/SECURITY.md) for the threat model,
 the trust boundaries, and reporting instructions.

@@ -73,7 +73,11 @@ No BharatCode binary is redistributed by the repository.
 | Registry pins | `bash tests/verify-pins.sh` | 8/8 passed (SHA-256, sha512, sha1) | 14:48 |
 | Secret scan | `bash tests/secret-scan.sh` | no credential/private-key patterns in 21 files | 15:59 |
 | CI-equivalent shell checks | `bash -n`; `shellcheck --severity=error` (0.11.0) | exit 0 | 15:59 |
-| Published file match | raw `README.md`, `install.sh`, `uninstall.sh`, `update.sh`, `diagnose.sh`, `TEST-REPORT.md` | SHA-256 identical to tested local files | before live install |
+| Published file match | raw `README.md`, `install.sh`, `uninstall.sh`, `update.sh`, `diagnose.sh`, `TEST-REPORT.md` | SHA-256 identical to tested local files at initial publication | before live install |
+
+A README wording correction after the release clarified that the pinned install checks
+SHA-256 at install time and that `tests/verify-pins.sh` performs the npm `sha512`/`sha1`
+cross-check. The installer script hash above is unchanged by that correction.
 
 Live installation was performed after a managed uninstall. Vendor account/session data was
 deliberately preserved, so the uninstall/reinstall cycle could be verified without
